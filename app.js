@@ -516,11 +516,11 @@ async function processCommand(cmd) {
             await typeText("Downloading payloads...", 20);
             await delay(400);
 
-            currentNode.keys.forEach(async (key) => {
+            for (const key of currentNode.keys) {
                 await typeText(`Downloaded: ${key}`, 10, 'highlight');
                 // Any item can be picked up and duplicates are fine
                 GameState.inventory.push(key);
-            });
+            }
 
             currentNode.keys = []; // Empty it
             updateUI();
