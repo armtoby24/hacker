@@ -1,0 +1,293 @@
+:root {
+    --bg-color: #050a05;
+    --text-color: #00ff41; /* Classic phosphor green */
+    --text-dim: #008f11;
+    --text-dark: #003b00;
+    --highlight: #b8ffb8;
+    --alert-high: #ff003c;
+    --alert-med: #ffb800;
+    --alert-low: #00ff41;
+    --border-color: #008f11;
+    --font-main: 'Fira Code', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    font-size: 14px;
+    line-height: 1.4;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+    text-shadow: 0 0 4px rgba(0, 255, 65, 0.4);
+}
+
+::selection {
+    background: var(--text-color);
+    color: var(--bg-color);
+}
+
+/* --- CRT Effects --- */
+.crt::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
+
+#scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 3;
+    position: absolute;
+    pointer-events: none;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.1) 10%, rgba(0, 0, 0, 0.1) 100%);
+    opacity: 0.1;
+    animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+}
+
+.flicker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 4;
+    background: rgba(0, 255, 65, 0.02);
+    animation: flicker 0.15s infinite;
+    mix-blend-mode: overlay;
+}
+
+@keyframes flicker {
+    0% { opacity: 0.95; }
+    5% { opacity: 0.85; }
+    10% { opacity: 0.95; }
+    15% { opacity: 1; }
+    50% { opacity: 0.9; }
+    55% { opacity: 0.95; }
+    60% { opacity: 1; }
+    100% { opacity: 0.95; }
+}
+
+/* --- Layout --- */
+.screen-container {
+    display: flex;
+    height: 100vh;
+    padding: 10px;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.panel {
+    border: 1px solid var(--border-color);
+    background: rgba(0, 15, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.05);
+}
+
+.terminal-panel {
+    flex: 2;
+}
+
+.sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.status-panel { flex: 0 0 auto; }
+.map-panel { flex: 1; }
+.rom-panel { flex: 1; }
+
+/* --- Components --- */
+.panel-header {
+    background-color: var(--text-dark);
+    color: var(--highlight);
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-padded {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Hide scrollbar for cleaner UI */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color); 
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color); 
+}
+
+/* --- Terminal Input --- */
+.terminal-input-line {
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    border-top: 1px dashed var(--text-dark);
+}
+
+.prompt {
+    margin-right: 10px;
+    color: var(--highlight);
+}
+
+#terminal-input {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: var(--font-main);
+    font-size: 14px;
+    flex: 1;
+    outline: none;
+    text-shadow: 0 0 4px rgba(0, 255, 65, 0.4);
+}
+
+/* Custom Block Cursor */
+.terminal-input-line { position: relative; }
+#terminal-input { caret-color: transparent; }
+
+/* We'll manage the visual cursor via JS to make it blocky, 
+   or just rely on standard cursor for simplicity initially. 
+   For a true block cursor effect, we'd overlay a span. */
+
+/* --- Typography / Utility --- */
+.highlight { color: var(--highlight); font-weight: bold; }
+.alert-high { color: var(--alert-high); text-shadow: 0 0 5px rgba(255,0,0,0.5); }
+.alert-med { color: var(--alert-med); text-shadow: 0 0 5px rgba(255,184,0,0.5); }
+.alert-low { color: var(--alert-low); }
+
+.ascii-map {
+    white-space: pre;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--text-dim);
+}
+
+.rom-message {
+    margin-bottom: 8px;
+    position: relative;
+}
+.rom-message::before {
+    content: ">";
+    position: absolute;
+    left: -10px;
+    color: var(--text-dim);
+    opacity: 0.5;
+}
+
+/* Animations for text appearing */
+.typewriter-fade {
+    animation: textAppear 0.1s ease-in;
+}
+
+@keyframes textAppear {
+    from { opacity: 0; transform: translateX(-5px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Minigame --- */
+.hidden { display: none !important; }
+
+.overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+.btn-primary {
+    background: var(--bg-color);
+    color: var(--highlight);
+    border: 1px solid var(--highlight);
+    padding: 10px 20px;
+    font-family: var(--font-main);
+    font-size: 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--highlight);
+    color: var(--bg-color);
+    box-shadow: 0 0 10px var(--highlight);
+}
+
+.minigame-panel {
+    width: 80%;
+    max-width: 600px;
+    border-color: var(--alert-high);
+    box-shadow: 0 0 30px rgba(255,0,60,0.2);
+    animation: minigamePulse 2s infinite;
+}
+
+@keyframes minigamePulse {
+    0% { box-shadow: 0 0 20px rgba(255,0,60,0.2); }
+    50% { box-shadow: 0 0 40px rgba(255,0,60,0.4); }
+    100% { box-shadow: 0 0 20px rgba(255,0,60,0.2); }
+}
+
+.minigame-target {
+    font-size: 28px;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+    color: var(--text-color);
+    word-break: break-all;
+}
+
+.minigame-input {
+    font-size: 28px;
+    letter-spacing: 6px;
+    color: var(--alert-high);
+    min-height: 40px;
+    word-break: break-all;
+}

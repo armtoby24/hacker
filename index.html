@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL :: HACKER // THE CORE</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="crt">
+    <div id="scanline"></div>
+    <div class="flicker"></div>
+    
+    <!-- Start Overlay (To initialize Audio Context) -->
+    <div id="start-overlay" class="overlay">
+        <div class="panel">
+            <div class="content-padded" style="text-align: center;">
+                <h1 class="title">TERMINAL LINK</h1>
+                <p style="margin: 20px 0;">Audio connection requires manual handshake.</p>
+                <button id="btn-start" class="btn-primary">INITIALIZE LINK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minigame Overlay -->
+    <div id="minigame-overlay" class="hidden overlay">
+        <div class="panel minigame-panel">
+            <header class="panel-header" style="background-color: #3b0000; color: var(--alert-high); border-bottom-color: var(--alert-high);">
+                <span class="title">ICE BREAKER // OVERRIDE</span>
+                <span class="status-indicator alert-high" id="minigame-timer">10.00s</span>
+            </header>
+            <div class="content-padded" style="text-align: center;">
+                <div style="margin-bottom: 20px; color: var(--alert-med);">Match the sequence to bypass ICE:</div>
+                <div id="minigame-target" class="minigame-target">A B C D E</div>
+                <div id="minigame-input" class="minigame-input"></div>
+                <div id="minigame-hint" style="margin-top: 20px; font-size: 12px; color: var(--text-dim);">
+                    [TAB] Use Data Buffer to Bypass (0x available)
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="screen-container">
+        <!-- Main Terminal Panel -->
+        <main class="panel terminal-panel">
+            <header class="panel-header">
+                <span class="title">sys-term v4.2.0</span>
+                <span class="status-indicator">ONLINE</span>
+            </header>
+            <div id="terminal-output" class="content-scroll">
+                <div>Establishing connection...</div>
+                <div>Connection established. User identity concealed.</div>
+                <div><br></div>
+                <div>Welcome to the Matrix. Find your way to The Core.</div>
+                <div>Type 'help' for available commands.</div>
+            </div>
+            <div class="terminal-input-line">
+                <span class="prompt">root@null:~$</span>
+                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" autofocus>
+                <div class="cursor"></div>
+            </div>
+        </main>
+
+        <!-- Sidebar for Status, Map and ROM -->
+        <aside class="sidebar">
+            <div class="panel status-panel">
+                <header class="panel-header">
+                    <span class="title">node-status</span>
+                </header>
+                <div class="content-padded" id="status-content">
+                    <div>LOCATION: <span id="loc-name" class="highlight">Gateway</span></div>
+                    <div>ICE LEVEL: <span id="loc-ice" class="alert-low">0%</span></div>
+                    <div>KEYS: <span id="keys-count">0</span> / 1</div>
+                    <div>TRACE: <span id="trace-level" class="alert-low">0%</span></div>
+                </div>
+            </div>
+
+            <div class="panel map-panel">
+                <header class="panel-header">
+                    <span class="title">net-map</span>
+                </header>
+                <div class="content-padded ascii-map" id="map-content">
+                    [Map Data Unavailable]
+                </div>
+            </div>
+
+            <div class="panel rom-panel">
+                <header class="panel-header">
+                    <span class="title">rom-link</span>
+                    <span class="status-indicator rom-status">IDLE</span>
+                </header>
+                <div class="content-padded" id="rom-output">
+                    <div class="rom-message">>> Initiating ROM unit...</div>
+                    <div class="rom-message">>> ROM: I'm in. Let's find that passkey. Keep your profile low.</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    <script src="audio.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
