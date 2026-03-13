@@ -7,7 +7,7 @@ const NetworkGraph = {
         ice: 0,
         keys: ['guest_list.txt'],
         links: ['proxy_1', 'mail_server'],
-        pos: {x: 0, y: 0, z: 0}
+        pos: { x: 0, y: 0, z: 0 }
     },
     'proxy_1': {
         id: 'proxy_1',
@@ -16,7 +16,7 @@ const NetworkGraph = {
         ice: 1,
         keys: ['proxy_logs.db'],
         links: ['gateway', 'subnet_b', 'auth_server'],
-        pos: {x: 3, y: 1.5, z: -2}
+        pos: { x: 3, y: 1.5, z: -2 }
     },
     'mail_server': {
         id: 'mail_server',
@@ -25,7 +25,7 @@ const NetworkGraph = {
         ice: 0,
         keys: ['email_hash', 'admin_dump.bak'],
         links: ['gateway'],
-        pos: {x: -3, y: -1, z: 1}
+        pos: { x: -3, y: -1, z: 1 }
     },
     'subnet_b': {
         id: 'subnet_b',
@@ -34,7 +34,7 @@ const NetworkGraph = {
         ice: 2,
         keys: ['token_sequence'],
         links: ['proxy_1', 'database_1'],
-        pos: {x: 5, y: -0.5, z: -4}
+        pos: { x: 5, y: -0.5, z: -4 }
     },
     'auth_server': {
         id: 'auth_server',
@@ -43,7 +43,7 @@ const NetworkGraph = {
         ice: 4,
         keys: ['auth_token'],
         links: ['proxy_1', 'core_router'],
-        pos: {x: 1, y: 4, z: -3}
+        pos: { x: 1, y: 4, z: -3 }
     },
     'database_1': {
         id: 'database_1',
@@ -52,7 +52,7 @@ const NetworkGraph = {
         ice: 3,
         keys: ['sys_admin_hash', 'root_cert'],
         links: ['subnet_b', 'core_router'],
-        pos: {x: 7, y: -2, z: -6}
+        pos: { x: 7, y: -2, z: -6 }
     },
     'core_router': {
         id: 'core_router',
@@ -61,7 +61,7 @@ const NetworkGraph = {
         ice: 5,
         keys: ['firewall_override'],
         links: ['auth_server', 'database_1', 'the_core'],
-        pos: {x: 4, y: 3, z: -8}
+        pos: { x: 4, y: 3, z: -8 }
     },
     'the_core': {
         id: 'the_core',
@@ -70,7 +70,7 @@ const NetworkGraph = {
         ice: 8,
         keys: ['the_passkey'],
         links: ['core_router'],
-        pos: {x: 5, y: 0, z: -11}
+        pos: { x: 5, y: 0, z: -11 }
     }
 };
 
@@ -83,7 +83,8 @@ const GameState = {
     discoveredNodes: new Set(['gateway']),
     isProcessing: false,
     startTime: null,
-    endTime: null
+    endTime: null,
+    traceTimerId: null
 };
 
 const MinigameState = {
@@ -159,6 +160,18 @@ document.addEventListener('DOMContentLoaded', () => {
         window.AudioEngine.init();
         startOverlay.classList.add('hidden');
         GameState.startTime = Date.now();
+
+        // Passive trace increase
+        GameState.traceTimerId = setInterval(async () => {
+            if (GameState.trace >= 100) return;
+            GameState.trace += 1;
+            updateUI();
+            if (GameState.trace >= 100) {
+                clearInterval(GameState.traceTimerId);
+                await triggerGameLoss();
+            }
+        }, 3000);
+
         runBootSequence();
     });
 
@@ -191,7 +204,7 @@ function updateUI() {
 
     // Draw Ascii Map
     drawMap();
-    
+
     // Update 3D Map
     if (window.Map3D) {
         window.Map3D.update(GameState);
@@ -207,11 +220,11 @@ function drawMap() {
     currentNode.links.forEach(link => {
         const linkNode = NetworkGraph[link];
         const isDiscovered = GameState.discoveredNodes.has(link);
-        
+
         const status = isDiscovered ? linkNode.name : 'Unknown Host';
         const isSecure = isDiscovered ? (linkNode.ice > 0 ? '[SECURE]' : '[OPEN]') : '[??????]';
         const displayLink = isDiscovered ? link : '???';
-        
+
         mapText += `   |-- ${displayLink} ${isSecure} (${status})\n`;
     });
 
@@ -396,7 +409,7 @@ async function runBootSequence() {
     await typeText("Welcome to the Matrix. Find your way to The Core.", 20);
     await typeText("Type 'help' for Available Commands.", 20);
 
-    romLog("I'm in. Keep your profile low. Use 'scan' to see where we can go.");
+    romLog("Keep your profile low. Use 'scan' to see where we can go.");
     GameState.isProcessing = false;
 }
 
@@ -567,6 +580,7 @@ async function processCommand(cmd) {
 }
 
 async function triggerGameLoss() {
+    clearInterval(GameState.traceTimerId);
     GameState.isProcessing = true;
     UI.termOutput.innerHTML = '';
     UI.termOutput.style.color = 'var(--alert-high)';
@@ -599,32 +613,33 @@ function updateLeaderboard(timeMs) {
 }
 
 async function triggerGameWin() {
+    clearInterval(GameState.traceTimerId);
     GameState.isProcessing = true;
     GameState.endTime = Date.now();
     await delay(1000);
     UI.termOutput.innerHTML = '';
-    
+
     window.AudioEngine.playSuccess();
     await typeText(">> CORE PASSKEY SECURED <<", 20, 'highlight');
     await typeText("CONNECTION SEVERED SAFELY", 20, 'highlight');
     await typeText("MISSION ACCOMPLISHED.", 20, 'highlight');
     romLog("We got it! Splitting the connection before they trace us. Excellent work.");
-    
+
     const timeTaken = GameState.endTime - GameState.startTime;
     const timeFormatted = formatTime(timeTaken);
-    
+
     await typeText(" ", 0);
     await typeText(`TIME ELAPSED: ${timeFormatted}`, 20, 'highlight');
-    
+
     const leaderboard = updateLeaderboard(timeTaken);
-    
+
     await typeText(" ", 0);
     await typeText("--- TOP OPERATORS ---", 10);
-    
+
     for (let i = 0; i < leaderboard.length; i++) {
         const isCurrent = leaderboard[i] === timeTaken ? 'highlight' : '';
         await typeText(`${i + 1}. ${formatTime(leaderboard[i])}`, 10, isCurrent);
     }
-    
+
     UI.termInput.disabled = true;
 }

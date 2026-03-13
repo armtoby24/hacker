@@ -86,7 +86,7 @@ class Map3DVisualizer {
             mesh.userData.iceMesh = iceMesh;
             mesh.add(iceMesh);
             
-            const labelSprite = this.createTextSprite(nodeData.name);
+            const labelSprite = this.createTextSprite(id);
             if (nodeData.pos) {
                 labelSprite.position.set(nodeData.pos.x, nodeData.pos.y - 1.3, nodeData.pos.z);
             }
