@@ -6,7 +6,8 @@ const NetworkGraph = {
         desc: 'Unsecured public entry point. Low traffic.',
         ice: 0,
         keys: ['guest_list.txt'],
-        links: ['proxy_1', 'mail_server']
+        links: ['proxy_1', 'mail_server'],
+        pos: {x: 0, y: 0, z: 0}
     },
     'proxy_1': {
         id: 'proxy_1',
@@ -14,7 +15,8 @@ const NetworkGraph = {
         desc: 'Standard routing node. Basic firewall active.',
         ice: 1,
         keys: ['proxy_logs.db'],
-        links: ['gateway', 'subnet_b', 'auth_server']
+        links: ['gateway', 'subnet_b', 'auth_server'],
+        pos: {x: 3, y: 1.5, z: -2}
     },
     'mail_server': {
         id: 'mail_server',
@@ -22,7 +24,8 @@ const NetworkGraph = {
         desc: 'Employee communications. Might contain careless passwords.',
         ice: 0,
         keys: ['email_hash', 'admin_dump.bak'],
-        links: ['gateway']
+        links: ['gateway'],
+        pos: {x: -3, y: -1, z: 1}
     },
     'subnet_b': {
         id: 'subnet_b',
@@ -30,7 +33,8 @@ const NetworkGraph = {
         desc: 'Staging ground for internal tools.',
         ice: 2,
         keys: ['token_sequence'],
-        links: ['proxy_1', 'database_1']
+        links: ['proxy_1', 'database_1'],
+        pos: {x: 5, y: -0.5, z: -4}
     },
     'auth_server': {
         id: 'auth_server',
@@ -38,7 +42,8 @@ const NetworkGraph = {
         desc: 'Handles intranet token validation. Heavily guarded.',
         ice: 4,
         keys: ['auth_token'],
-        links: ['proxy_1', 'core_router']
+        links: ['proxy_1', 'core_router'],
+        pos: {x: 1, y: 4, z: -3}
     },
     'database_1': {
         id: 'database_1',
@@ -46,7 +51,8 @@ const NetworkGraph = {
         desc: 'Employee records and clearance levels.',
         ice: 3,
         keys: ['sys_admin_hash', 'root_cert'],
-        links: ['subnet_b', 'core_router']
+        links: ['subnet_b', 'core_router'],
+        pos: {x: 7, y: -2, z: -6}
     },
     'core_router': {
         id: 'core_router',
@@ -54,7 +60,8 @@ const NetworkGraph = {
         desc: 'The final gate. Requires strict auth token access.',
         ice: 5,
         keys: ['firewall_override'],
-        links: ['auth_server', 'database_1', 'the_core']
+        links: ['auth_server', 'database_1', 'the_core'],
+        pos: {x: 4, y: 3, z: -8}
     },
     'the_core': {
         id: 'the_core',
@@ -62,7 +69,8 @@ const NetworkGraph = {
         desc: 'Primary data vault. Objective location.',
         ice: 8,
         keys: ['the_passkey'],
-        links: ['core_router']
+        links: ['core_router'],
+        pos: {x: 5, y: 0, z: -11}
     }
 };
 
@@ -96,6 +104,7 @@ const UI = {
     traceLevel: document.getElementById('trace-level'),
     romOutput: document.getElementById('rom-output'),
     mapContent: document.getElementById('map-content'),
+    map3d: document.getElementById('map-3d'),
     minigameOverlay: document.getElementById('minigame-overlay'),
     minigameTimer: document.getElementById('minigame-timer'),
     minigameTarget: document.getElementById('minigame-target'),
@@ -105,6 +114,11 @@ const UI = {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize 3D Map
+    if (typeof Map3DVisualizer !== 'undefined') {
+        window.Map3D = new Map3DVisualizer('map-3d');
+    }
+
     document.addEventListener('click', () => {
         if (!MinigameState.active) {
             UI.termInput.focus();
@@ -177,6 +191,11 @@ function updateUI() {
 
     // Draw Ascii Map
     drawMap();
+    
+    // Update 3D Map
+    if (window.Map3D) {
+        window.Map3D.update(GameState);
+    }
 }
 
 function drawMap() {
@@ -187,9 +206,13 @@ function drawMap() {
 
     currentNode.links.forEach(link => {
         const linkNode = NetworkGraph[link];
-        const status = GameState.discoveredNodes.has(link) ? linkNode.name : 'Unknown Host';
-        const isSecure = linkNode.ice > 0 ? '[SECURE]' : '[OPEN]';
-        mapText += `   |-- ${link} ${isSecure} (${status})\n`;
+        const isDiscovered = GameState.discoveredNodes.has(link);
+        
+        const status = isDiscovered ? linkNode.name : 'Unknown Host';
+        const isSecure = isDiscovered ? (linkNode.ice > 0 ? '[SECURE]' : '[OPEN]') : '[??????]';
+        const displayLink = isDiscovered ? link : '???';
+        
+        mapText += `   |-- ${displayLink} ${isSecure} (${status})\n`;
     });
 
     UI.mapContent.innerHTML = mapText;
@@ -439,6 +462,11 @@ async function processCommand(cmd) {
             const target = args[0];
             if (!target) {
                 await typeText("Usage: move <node_id>", 10);
+                break;
+            }
+
+            if (!GameState.discoveredNodes.has(target)) {
+                await typeText(`Error: host '${target}' not found. Try running 'scan'.`, 10, 'alert-med');
                 break;
             }
 
