@@ -121,7 +121,7 @@ body {
 
 .status-panel { flex: 0 0 auto; }
 .map-panel { flex: 1; }
-.rom-panel { flex: 1; }
+.rom-panel { flex: 1; min-height: 0; overflow: hidden; }
 
 /* --- Components --- */
 .panel-header {
