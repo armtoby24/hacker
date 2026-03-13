@@ -594,6 +594,11 @@ async function triggerGameLoss() {
     // Disable inputs permanently
     UI.termInput.disabled = true;
     UI.mapContent.innerHTML = '[NO SIGNAL]';
+
+    // Blank 3D map and show alert
+    if (window.Map3D) {
+        window.Map3D.showGameOver();
+    }
 }
 
 function formatTime(ms) {

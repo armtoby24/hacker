@@ -49,18 +49,18 @@ class Map3DVisualizer {
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     }
 
-    createTextSprite(message) {
+    createTextSprite(message, color = '#00ff41', shadowColor = 'rgba(0, 255, 65, 0.8)') {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         canvas.width = 512;
         canvas.height = 128;
                 
         context.font = "bold 34px 'Fira Code', monospace";
-        context.fillStyle = "#00ff41"; 
+        context.fillStyle = color; 
         context.textAlign = "center";
         context.textBaseline = "middle";
         
-        context.shadowColor = "rgba(0, 255, 65, 0.8)";
+        context.shadowColor = shadowColor;
         context.shadowBlur = 8;
 
         context.fillText(message, canvas.width / 2, canvas.height / 2);
@@ -72,6 +72,54 @@ class Map3DVisualizer {
         // Scale appropriately for 512x128 aspect ratio (4:1)
         sprite.scale.set(3.2, 0.8, 1); 
         return sprite;
+    }
+
+    showGameOver() {
+        // Remove everything from the scene
+        while (this.scene.children.length > 0) {
+            this.scene.remove(this.scene.children[0]);
+        }
+        this.nodes = {};
+        this.edges = [];
+
+        // Create red alert text lines
+        const lines = [
+            'CRITICAL ALERT - TRACE AT 100%',
+            'CONNECTION SEVERED BY HOST',
+            'SYS-TERM KILLED.'
+        ];
+
+        const red = '#ff003c';
+        const redShadow = 'rgba(255, 0, 60, 0.8)';
+
+        lines.forEach((line, i) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1024;
+            canvas.height = 128;
+            ctx.font = "bold 42px 'Fira Code', monospace";
+            ctx.fillStyle = red;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = redShadow;
+            ctx.shadowBlur = 12;
+            ctx.fillText(line, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.set(0, 1.5 - (i * 1.2), 0);
+            sprite.scale.set(8, 1, 1);
+            this.scene.add(sprite);
+        });
+
+        // Reset camera to face the text head-on
+        this.camera.position.set(0, 0.5, 8);
+        this.camera.lookAt(0, 0.5, 0);
+
+        // Stop scene rotation
+        this.scene.rotation.set(0, 0, 0);
+        this._dead = true;
     }
 
     buildNetwork() {
@@ -223,9 +271,11 @@ class Map3DVisualizer {
             }
         }
         
-        // Gentle scene rotation
-        this.scene.rotation.y = Math.sin(time * 0.1) * 0.2;
-        this.scene.rotation.x = Math.cos(time * 0.1) * 0.05;
+        // Gentle scene rotation (skip if dead)
+        if (!this._dead) {
+            this.scene.rotation.y = Math.sin(time * 0.1) * 0.2;
+            this.scene.rotation.x = Math.cos(time * 0.1) * 0.05;
+        }
 
         this.renderer.render(this.scene, this.camera);
     }
