@@ -178,13 +178,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ambient ROM Dialogue
     setInterval(() => {
         if (!GameState.isProcessing && Math.random() > 0.85 && GameState.trace < 100 && GameState.inventory.length === 0) {
+            const currentNode = NetworkGraph[GameState.location];
             const ambientLines = [
                 "Keep your footprint small.",
                 "I'm masking our MAC address. You have some time.",
                 "If we hit heavy ICE, consider looking for side channels.",
                 "This network is quieter than I expected.",
-                "Don't forget to 'scan' your surroundings."
+                "Don't forget to 'scan' your surroundings.",
+                "Remember, downloaded files can be used as ICE breakers. Always 'download' what you can."
             ];
+            // If there are keys available on the current node and no ICE, prioritize the download hint
+            if (currentNode.ice === 0 && currentNode.keys.length > 0) {
+                romLog("I'm picking up data signatures here. Try 'download' before we move on.");
+                return;
+            }
             const line = ambientLines[Math.floor(Math.random() * ambientLines.length)];
             romLog(line);
         }
@@ -510,6 +517,9 @@ async function processCommand(cmd) {
                 GameState.discoveredNodes.add(target);
                 updateUI();
                 await typeText(`Successfully entered ${targetNode.name}.`, 10, 'highlight');
+                if (targetNode.keys.length > 0) {
+                    romLog("I detect data we can grab here. Use 'download' to snag it.");
+                }
             }
             break;
 
@@ -529,7 +539,11 @@ async function processCommand(cmd) {
                 await typeText(">> ICE BYPASSED <<", 20, 'highlight');
                 currentNode.ice = 0; // Permanently cracked for this session
                 updateUI();
-                romLog("Good job. We're clear here.");
+                if (currentNode.keys.length > 0) {
+                    romLog("Good job. We're clear here. I see files worth grabbing — run 'download'.");
+                } else {
+                    romLog("Good job. We're clear here.");
+                }
             } else {
                 window.AudioEngine.playError();
                 await typeText(">> DECRYPTION FAILED <<", 20, 'alert-high');
